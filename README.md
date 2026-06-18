@@ -1,0 +1,1 @@
+# Offline-AI-Assistant-for-Smart-Farming-in-Low-Connectivity-Areas
