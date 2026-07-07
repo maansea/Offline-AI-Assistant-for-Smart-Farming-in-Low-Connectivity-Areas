@@ -1,3 +1,4 @@
+import io
 import os
 import tempfile
 
@@ -56,6 +57,47 @@ def test_recommendation_endpoint_returns_results(client):
     payload = response.get_json()
     assert "crop_recommendation" in payload
     assert "fertilizer_recommendation" in payload
+
+
+def test_voice_page_includes_microphone_controls(client):
+    response = client.get("/voice")
+    assert response.status_code == 200
+    assert b"Start Recording" in response.data
+    assert b"Stop Recording" in response.data
+
+
+def test_voice_endpoint_handles_invalid_audio(client):
+    response = client.post(
+        "/voice",
+        data={"audio": (io.BytesIO(b"not-a-valid-wav"), "recording.wav")},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert "result" in payload
+    assert payload["result"]
+
+
+def test_voice_endpoint_returns_helpful_message_when_model_missing(client):
+    response = client.post(
+        "/voice",
+        data={"audio": (io.BytesIO(b"not-a-valid-wav"), "recording.wav")},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert "Offline speech model" in payload["result"]
+
+
+def test_voice_offline_endpoint_returns_json(client):
+    response = client.post(
+        "/voice/offline",
+        data={"duration": "1"},
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert "result" in payload
 
 
 def test_history_page_lists_recent_entries(client):
